@@ -1,4 +1,4 @@
-# Laboratorio pratico di creazione strumenti interni con AI
+# Sviluppo di un Proof of Concept (PoC) applicato al monitoraggio di impianti e reti
 
 Materiale del corso CSMT / CLUI-AS del 19 e 20 novembre 2026.
 
