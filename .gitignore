@@ -1,0 +1,18 @@
+# Ambiente Python creato da uv
+.venv/
+__pycache__/
+*.pyc
+
+# Cache degli strumenti di test e controllo del codice
+.pytest_cache/
+.ruff_cache/
+
+# File di sistema di macOS e Windows
+.DS_Store
+Thumbs.db
+
+# File temporanei che Excel e Word creano mentre un documento è aperto
+~$*
+
+# Impostazioni personali dell'agente, da non condividere
+.claude/settings.local.json
