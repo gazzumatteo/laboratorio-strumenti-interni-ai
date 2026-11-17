@@ -145,7 +145,7 @@ Se al primo avvio Streamlit chiede un indirizzo email nel terminale, premete Inv
 - benchmark fisso (un periodo scelto) e mobile (ultimi 30, 90, 180 o 365 giorni);
 - media (μ) e limiti μ ± kσ, con k = 3 di default, disegnati sul grafico.
 
-**Cosa controllare.** Senza il filtro sui giorni di fermo, l'indicatore ha valori enormi: con il filtro, no. I limiti cambiano quando cambiate benchmark o k.
+**Cosa controllare.** Spegnete il filtro dei giorni esclusi e guardate tutte le utenze: su almeno una l'indicatore arriva a valori impossibili, con il filtro no. I limiti cambiano quando cambiate benchmark o k.
 
 **Come verificare.** Con l'energia specifica della pompa P2B dell'impianto SOV-SA01, la mediana è circa 1,1 kWh/m³. Confrontate il benchmark fisso con quello mobile: trovano le stesse anomalie? Se no, perché?
 
