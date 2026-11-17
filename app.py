@@ -37,6 +37,7 @@ from indicators import (
 )
 from loader import CleaningReport, DataLoadError, load_daily
 from settings import IndicatorSettings, load_settings, save_indicator_settings
+from trend import DEFAULT_TREND_DAYS, MIN_TREND_POINTS, TREND_PERIODS, compute_trend
 
 DATA_FILE = Path(__file__).parent / "dati" / "set-dati.xlsx"
 CONFIG_FILE = Path(__file__).parent / "configurazione.json"  # R14; è nel .gitignore: contiene indirizzi e-mail
@@ -528,6 +529,39 @@ def show_benchmark(limits: pd.DataFrame | None, spec: FixedBenchmark | MovingBen
         st.caption(f"Benchmark mobile definito in {int(limits['mean'].notna().sum())} giorni su {len(limits)}.")
 
 
+def show_trend(series: pd.Series, choice: str) -> None:
+    """Pendenza della regressione lineare sugli ultimi giorni scelti (R15), o il motivo per cui manca."""
+    period_column, slope_column = st.columns([2, 1])
+    with period_column:
+        days = st.radio(
+            "Periodo del trend (ultimi giorni)",
+            TREND_PERIODS,
+            index=TREND_PERIODS.index(DEFAULT_TREND_DAYS),
+            horizontal=True,
+            key=f"{choice}:trend_days",
+        )
+    trend = compute_trend(series, days)
+    with slope_column:
+        if trend is None:
+            st.metric("Pendenza del trend (per giorno)", "–")
+        else:
+            st.metric(
+                "Pendenza del trend (per giorno)",
+                f"{trend.slope_per_day:+.6f}".replace(".", ","),
+                help="Quanto cambia in media l'indicatore ogni giorno: positiva se sale, negativa se scende. "
+                "Moltiplicata per 30 dà la variazione in un mese.",
+            )
+    if trend is None:
+        st.caption(
+            f"Pendenza non calcolata: servono almeno {MIN_TREND_POINTS} giorni con un valore negli ultimi {days} giorni."
+        )
+    else:
+        st.caption(
+            f"Retta di regressione su {trend.n_valid} giorni con un valore, "
+            f"dal {trend.period_start:%d/%m/%Y} al {trend.period_end:%d/%m/%Y}."
+        )
+
+
 st.set_page_config(page_title="Monitoraggio impianti", layout="wide")
 st.title("Monitoraggio impianti")
 
@@ -590,6 +624,7 @@ st.caption(
 
 if mode == "Indicatore":
     show_benchmark(limits, spec)
+    show_trend(series, choice)
     if anomalies is not None:
         show_events(events, int(anomalies.notna().sum()), persistence)
         if events:

@@ -69,6 +69,7 @@ Struttura del foglio: 3 righe di intestazione (tag, descrizione, nome colonna), 
 - **R12 — Report HTML.** Per ogni evento, un report scaricabile che si apre nel browser, con: utenza, parametro, valore rilevato, media del benchmark, deviazione standard, scostamento %, grafico dell'andamento. Il report è un unico file HTML senza dipendenze esterne (si apre anche senza rete); il grafico è un SVG in linea, dal 30° giorno prima dell'inizio al 14° dopo la fine dell'evento, con serie, media, limiti e giorni dell'evento evidenziati. Il report riporta anche i limiti nel giorno di scatto, il periodo dell'evento e le impostazioni usate (formula e fattori, benchmark, k, N, filtro dei giorni esclusi). Stesso input, stesso file: non c'è la data di generazione.
 - **R13 — Mail.** Per ogni evento, un file `.eml` già compilato, con i destinatari scelti dall'utente per l'indicatore (ripuliti dai doppioni; un indirizzo di forma non valida dà un errore e nessun file). Il testo contiene gli stessi dati del report: utenza, parametro, valore rilevato, media, deviazione standard, scostamento % e periodo dell'evento. **Non contiene il grafico** (scelta per la demo: nessun allegato, nessuna immagine, nessuna dipendenza in più); rimanda al report HTML. Il file è una bozza (`X-Unsent: 1`, senza mittente né data, quindi stesso input → stesso file). Non si invia nulla. Finché non c'è R14, i destinatari si scrivono nell'app a ogni avvio.
 - **R14 — Configurazione.** Le scelte (indicatori, ingressi, fattori, intervallo plausibile, benchmark, k, N, destinatari) si salvano in un file JSON leggibile con un editor di testo e si ricaricano all'avvio. Ogni indicatore ha la propria configurazione: non tutte le utenze si monitorano allo stesso modo. Il file è `configurazione.json` nella radice del repository (non è versionato: contiene indirizzi e-mail), con una voce per utenza e le chiavi in inglese (`formula`, `inputs`, `plausible_range`, `benchmark`, `k`, `persistence_days`, `recipients`). Si salva col pulsante «Salva la configurazione di questa utenza», che riscrive solo la voce di quell'utenza e lascia intatte le altre. Se il file manca, si parte dai valori predefiniti; se una voce è rovinata o scritta male a mano (o cita una colonna che nel file dei dati non c'è) compare un avviso in italiano e quell'utenza riparte dai predefiniti, senza fermare le altre; se non si legge tutto il file, avviso e predefiniti, e il successivo salvataggio lo sostituisce. L'utenza scelta e la casella dei giorni esclusi non si salvano.
+- **R15 — Trend (facoltativo, tappa 7).** Per l'indicatore scelto l'app mostra la pendenza della retta di regressione lineare (minimi quadrati) sugli ultimi D giorni di calendario, con D a scelta tra 30, 90, 180 e 365 (90 di partenza); il periodo finisce con l'ultimo giorno dei dati. Contano solo i giorni con un valore: i giorni esclusi non sono punti e non valgono zero, e il tempo si misura in giorni di calendario, quindi un giorno escluso non sposta gli altri. La pendenza è in unità dell'indicatore per giorno (positiva se l'indicatore sale). Servono almeno 10 giorni con un valore (provvisorio, Q12): altrimenti l'app dice che la pendenza non è calcolata. Il trend non genera allarmi e la scelta di D non si salva nella configurazione.
 
 ---
 
@@ -124,6 +125,7 @@ I valori attesi sono scritti **prima** della costruzione. Quelli sul file d'esem
 | V20 | R12 | Scaricare il report di un evento | si apre nel browser e contiene i sette campi e il grafico |
 | V21 | R13 | Aprire il `.eml` con doppio clic | il programma di posta lo apre già compilato (destinatari, oggetto, corpo); nessun invio |
 | V22 | R14 | Cambiare k e N, chiudere e riaprire l'app | i valori sono quelli scelti |
+| V23 | R15 | Serie costruita che cresce di 1 al giorno; poi i dati veri | pendenza 1 (test automatico). Su P2B, ultimi 90 giorni: −0,000616 per giorno su 83 giorni validi, dal 18/06/2026 al 15/09/2026; ultimi 30 giorni: −0,007521 su 25 giorni. P3A, ultimi 30 giorni: solo 9 giorni validi, nessuna pendenza |
 
 ---
 
@@ -137,7 +139,7 @@ Non si costruisce adesso, e di proposito:
 - **Foglio `dati 5min`.** Non è un valore al giorno e copre solo 6 mesi; si può aggiungere come variante.
 - **Formule scritte liberamente dall'utente.** Solo i tipi A, A/B, (A+B)/C. È l'esercizio dopo il corso.
 - **Metodi di intelligenza artificiale.** Solo statistica (μ ± kσ).
-- **Analisi di trend con regressione lineare.** Facoltativa, tappa 7.
+- **Analisi di trend oltre la pendenza.** La tappa 7 (facoltativa, R15) calcola solo la pendenza della regressione lineare: niente soglie, niente allarmi sul trend, niente previsioni.
 - **Storico degli eventi memorizzato.** Gli eventi si ricalcolano a ogni avvio.
 - **Accesso con password, più utenti, ruoli.**
 - **Interpolazione o ricostruzione dei dati mancanti.**
@@ -169,7 +171,7 @@ dati/set-dati.xlsx  (foglio "giornalieri", sola lettura)
   settings  ⟷  legge e scrive configurazione.json; app e gli altri moduli ricevono i valori già letti
 ```
 
-**Dati → calcoli → risultati.** `loader` produce i dati puliti; `indicators`, `benchmark` e `alarms` sono i calcoli, in cascata, ognuno con in ingresso solo l'uscita del precedente e i propri parametri; `export` e `app` mostrano i risultati.
+**Dati → calcoli → risultati.** `loader` produce i dati puliti; `indicators`, `benchmark` e `alarms` sono i calcoli, in cascata (`trend` è un calcolo a parte, sulla serie dell'indicatore), ognuno con in ingresso solo l'uscita del precedente e i propri parametri; `export` e `app` mostrano i risultati.
 
 | Modulo | Responsabilità (una sola) | Riceve | Restituisce | Non fa |
 |---|---|---|---|---|
@@ -179,6 +181,7 @@ dati/set-dati.xlsx  (foglio "giornalieri", sola lettura)
 | `alarms` | Segnare i giorni anomali e raggrupparli in eventi (R8–R10) | serie, limiti, N | giorni anomali ed elenco eventi | disegnare, scrivere file |
 | `export` | Trasformare un evento in report HTML e in `.eml` (R12, R13) | evento, serie, destinatari | testo del report e del messaggio | calcolare qualcosa |
 | `settings` | Leggere e scrivere la configurazione (R14) | percorso del file | oggetto di configurazione, valori di default se il file manca | calcoli, grafica |
+| `trend` | Pendenza della regressione lineare sugli ultimi giorni (R15) | serie dell'indicatore, numero di giorni | pendenza per giorno e giorni usati, oppure "dati insufficienti" | allarmi, disegnare |
 | `app` | Interfaccia Streamlit: comandi, grafico, messaggi d'errore (R11) | azioni dell'utente | pagina nel browser | logica di calcolo |
 
 **Regole tra i moduli.** Si dipende solo "in avanti" nel flusso: `loader` non conosce `indicators`, e così via. Solo `app` importa Streamlit e solo `settings` tocca il file di configurazione. Così ogni calcolo si prova con una serie scritta a mano (V7–V15) senza avviare l'app.
@@ -202,3 +205,4 @@ Da portare a chi conosce l'impianto o i dati. Fino alla risposta valgono le scel
 | Q9 | Nel foglio a 5 minuti la colonna `POTENZA ORB-PO04 [bar]` ha l'unità di una pressione, i valori (fino a 104) e il tag fanno pensare a una potenza in kW. Quale delle due? | Non rilevante finché il foglio è fuori |
 | Q10 | Perché SFI-SA04 ha molti valori mancanti e valori assurdi? | Fuori dalla demo |
 | Q11 | Se l'anomalia passa da sopra a sotto i limiti senza giorni normali in mezzo, è un unico allarme o due? | Due: cambiare parte dei limiti interrompe la sequenza (R9). Sui dati veri non succede mai |
+| Q12 | Quanti giorni con un valore servono per fidarsi di una pendenza? | 10 (R15). Su P3A negli ultimi 30 giorni i giorni validi sono 9: nessuna pendenza |

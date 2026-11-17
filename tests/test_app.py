@@ -185,3 +185,40 @@ def test_configurazione_con_una_colonna_inesistente_da_un_avviso_e_i_valori_pred
     assert not at.exception
     assert len(at.warning) == 1 and "COLONNA INESISTENTE" in at.warning[0].value
     assert at.number_input(key=f"{P2B}:k").value == 3.0
+
+
+# --- Trend (R15) -------------------------------------------------------------------------------------
+
+
+def trend_metric(at: AppTest) -> str:
+    return next(m.value for m in at.metric if m.label == "Pendenza del trend (per giorno)")
+
+
+def test_trend_di_partenza_p2b_ultimi_90_giorni():
+    at = run_app()
+    assert not at.exception
+    assert trend_metric(at) == "-0,000616"  # calcolato a parte con numpy.polyfit
+    assert "su 83 giorni con un valore, dal 18/06/2026 al 15/09/2026" in caption_with(at, "Retta di regressione")
+
+
+def test_trend_cambiando_il_periodo():
+    at = run_app()
+    next(r for r in at.radio if r.key == f"{P2B}:trend_days").set_value(30).run()
+    assert trend_metric(at) == "-0,007521"
+    next(r for r in at.radio if r.key == f"{P2B}:trend_days").set_value(365).run()
+    assert trend_metric(at) == "-0,000042"
+
+
+def test_trend_non_calcolato_se_i_giorni_validi_sono_pochi():
+    at = run_app()
+    at.selectbox[0].select(DEFAULT_INDICATORS[1].name).run()  # P3A: 9 giorni validi negli ultimi 30
+    next(r for r in at.radio if r.key == f"{DEFAULT_INDICATORS[1].name}:trend_days").set_value(30).run()
+    assert not at.exception
+    assert trend_metric(at) == "–"
+    assert "servono almeno 10 giorni" in caption_with(at, "Pendenza non calcolata")
+
+
+def test_serie_del_file_non_ha_il_trend():
+    at = run_app()
+    next(r for r in at.radio if r.label == "Cosa guardare").set_value("Serie del file").run()
+    assert not at.exception and not at.metric

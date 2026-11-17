@@ -29,6 +29,8 @@ finisce un passo importante. Le sigle V16–V22 sono le verifiche di [SPECIFICA.
 - [ ] P3A, stesse impostazioni: un evento 21/07/2025 → 30/07/2025, sopra i limiti, +23,78 %.
 - [ ] SFI-SA02, stesse impostazioni: due eventi (04/07/2024 sopra, +33,16 %; 09/04/2025 sotto, −68,73 %).
 - [ ] P3A: i due giorni «fuori scala» (11 e 19/07/2024) non sono nel grafico, ma segnati come esclusi.
+- [ ] Trend (R15), P2B: ultimi 90 giorni → pendenza −0,000616 su 83 giorni (dal 18/06/2026 al 15/09/2026); 30 giorni → −0,007521 su 25 giorni.
+- [ ] Trend, P3A, 30 giorni: «Pendenza non calcolata» e il motivo (solo 9 giorni con un valore, ne servono 10).
 
 **4. Errori comprensibili** (V19)
 
