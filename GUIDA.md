@@ -217,6 +217,25 @@ Nella tappa pronta del ramo `soluzione` ci sono in più un report HTML scaricabi
 
 **Se sei indietro.** `tappa-6-test`.
 
+### Tappa 8 — Un componente AI (`tappa-8-ai`, facoltativa, già pronta)
+
+**Obiettivo.** Vedere come un'app usa un componente AI già predisposto per elaborare i dati: per un evento di allarme, un modello Gemini (di Google) scrive un breve commento in italiano per la squadra di manutenzione. In aula non si costruisce: il docente lo mostra con una sua chiave temporanea, che non viene condivisa.
+
+**Cosa fa.** Sotto l'elenco degli allarmi compare il pulsante «Commento AI». Premuto, il modello riceve solo i numeri dell'evento (utenza, parametro, valore, media, deviazione standard, scostamento, periodo, limiti e ampiezza k) e gli ultimi 30 valori dell'indicatore, e risponde con cosa è successo, quanto è grave rispetto al benchmark, due o tre possibili cause da verificare e cosa controllare per prima cosa. Il testo è sempre preceduto da «Commento generato da un modello AI: da verificare». Una casella decide se metterlo anche nel report e nella mail. Senza chiave la funzione è spenta, un messaggio spiega come attivarla e l'app funziona come alla tappa 7.
+
+**Provarlo da soli.** Serve una chiave personale e gratuita.
+1. Vai su [Google AI Studio](https://aistudio.google.com/apikey), accedi con un account Google, accetta i termini e premi **Create API key**. Copia la chiave.
+2. Impostala nel terminale da cui avvii l'app, prima di avviarla. Non incollarla in un file del progetto né nella chat con l'agente.
+   - PowerShell (Windows): `$env:GEMINI_API_KEY = "la-tua-chiave"`
+   - Terminale del Mac: `export GEMINI_API_KEY="la-tua-chiave"`
+3. Nello stesso terminale passa alla tappa come in «Ripartire da una tappa» (`git switch -c prova-ai tappa-8-ai`) e avvia l'app con `uv run streamlit run app.py`.
+
+La variabile vale solo per quella finestra del terminale: in una nuova va impostata di nuovo. Il modello usato è quello predefinito; per sceglierne un altro si imposta allo stesso modo `GEMINI_MODEL`.
+
+**Attenzione ai dati.** Fuori dall'Europa, con una chiave gratuita Google può usare i dati inviati per migliorare i suoi prodotti. Nello Spazio economico europeo (Italia compresa), in Svizzera e nel Regno Unito i [termini di Google](https://aistudio.google.com/docs/terms) dicono invece che anche la quota gratuita segue le regole del piano a pagamento: i dati non si usano per migliorare i prodotti. Gli stessi termini chiedono il piano a pagamento se l'app la usano altre persone in Europa, per esempio i colleghi. I termini cambiano nel tempo: prima di inviare dati aziendali, o di far usare l'app ad altri, decidete con l'IT. Vedi [06 — Quando non farlo da soli](docs/linee-guida/06-quando-non-farlo-da-soli.md).
+
+**Come verificare.** Il commento cita i numeri dell'evento che vedi sul grafico e scrive le cause come ipotesi: leggilo come uno spunto da verificare, non come una diagnosi. Senza chiave il pulsante è spento e compare un messaggio, senza errori.
+
 ## Se avanza tempo
 
 - Il report HTML di un evento, con il grafico, e il salvataggio della configurazione (vedi tappa 5).
