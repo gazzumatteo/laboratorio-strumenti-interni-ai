@@ -4,7 +4,7 @@ Regole del progetto per l'agente (Claude Code o Codex). Si leggono a ogni sessio
 
 ## Stato del repository
 
-Materiale di un corso (CSMT / CLUI-AS, 19–20 novembre 2026): si costruisce con l'agente una piccola app Streamlit che monitora serie di misure di impianti e segnala anomalie. **Siamo alla tappa 4: l'app mostra indicatori e benchmark, senza allarmi.** Il codice c'è: `loader.py` (R1–R3, caricamento e pulizia), `indicators.py` (R4–R5: formule A/B e (A+B)/C con fattori di conversione, classificazione dei giorni valido/mancante/fermo/fuori scala), `benchmark.py` (R6–R7: μ e σ fisso o mobile, limiti μ ± kσ) e `app.py` (scelta di indicatore o serie, filtro dei giorni esclusi, benchmark, grafico con media e limiti, riquadro "Pulizia dei dati", messaggio d'errore se il file manca). Gli altri moduli di SPECIFICA.md §6 (`alarms`, `export`, `settings`) non esistono ancora. Il resto del repo è guida, linee guida, dati e [SPECIFICA.md](SPECIFICA.md). L'app si costruisce a tappe (vedi [GUIDA.md](GUIDA.md)).
+Materiale di un corso (CSMT / CLUI-AS, 19–20 novembre 2026): si costruisce con l'agente una piccola app Streamlit che monitora serie di misure di impianti e segnala anomalie. **Siamo alla tappa 5: l'app segnala gli allarmi e produce mail e report.** Il codice c'è: `loader.py` (R1–R3, caricamento e pulizia), `indicators.py` (R4–R5: formule A/B e (A+B)/C con fattori di conversione, classificazione dei giorni valido/mancante/fermo/fuori scala), `benchmark.py` (R6–R7: μ e σ fisso o mobile, limiti μ ± kσ) `alarms.py` (R8–R10: giorni anomali ed eventi con persistenza di N giorni), `export.py` (R12–R13: report HTML con grafico SVG di un evento e mail `.eml` senza grafico, con destinatari), `settings.py` (R14: configurazione di ogni utenza in `configurazione.json`, letta all'avvio e scritta dal pulsante «Salva») e `app.py` (scelta di indicatore o serie, filtro dei giorni esclusi, benchmark, grafico con media, limiti e giorni anomali, elenco degli eventi, download di report e mail, riquadro "Pulizia dei dati", messaggio d'errore se il file manca). Tutti i moduli di SPECIFICA.md §6 esistono. Il resto del repo è guida, linee guida, dati e [SPECIFICA.md](SPECIFICA.md). L'app si costruisce a tappe (vedi [GUIDA.md](GUIDA.md)).
 
 [SPECIFICA.md](SPECIFICA.md) è la fonte di verità: requisiti R1–R14, verifiche V1–V22, lista "Fuori" e domande aperte. Quando una scelta non è lì, non decidere in silenzio: chiedi. Il materiale di partenza è in [docs/caso-esempio/](docs/caso-esempio/README.md); il metodo del corso in [docs/linee-guida/](docs/linee-guida/).
 
@@ -24,7 +24,7 @@ Si lanciano dalla radice del repository. L'app esiste; i test no (pytest non è 
 
 ## Architettura
 
-Flusso dati → calcoli → risultati, in cascata, un modulo per responsabilità (dettaglio e interfacce in SPECIFICA.md §6). Esistono `loader`, `indicators`, `benchmark` e `app`; gli altri sono previsti:
+Flusso dati → calcoli → risultati, in cascata, un modulo per responsabilità (dettaglio e interfacce in SPECIFICA.md §6). Esistono tutti:
 
 `loader` (Excel → tabella giornaliera pulita) → `indicators` (serie dell'indicatore + giorni non validi) → `benchmark` (μ, σ, limiti fissi o mobili) → `alarms` (giorni anomali → eventi con persistenza di N giorni) → `export` (report HTML, `.eml`) e `app` (Streamlit). `settings` legge e scrive `configurazione.json`.
 
@@ -32,6 +32,7 @@ Regole che attraversano più file:
 - Si dipende solo "in avanti" nel flusso; i moduli di calcolo **non importano Streamlit** (solo `app` lo fa), così ogni calcolo si prova con una serie scritta a mano.
 - `settings` è l'unico a toccare il file di configurazione; gli altri moduli ricevono i valori già letti.
 - Gli eventi non si memorizzano: si ricalcolano a ogni avvio da dati e configurazione.
+- `configurazione.json` non va nel repository (contiene indirizzi e-mail dei destinatari): è nel `.gitignore`. Non committarlo e non scrivere indirizzi veri nei file.
 
 ## Dati
 

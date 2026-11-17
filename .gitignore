@@ -16,3 +16,7 @@ Thumbs.db
 
 # Impostazioni personali dell'agente, da non condividere
 .claude/settings.local.json
+
+# Configurazione salvata dall'app (R14): contiene indirizzi e-mail dei destinatari
+configurazione.json
+configurazione.json.tmp
