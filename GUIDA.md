@@ -155,25 +155,24 @@ Se al primo avvio Streamlit chiede un indirizzo email nel terminale, premete Inv
 
 **Approfondisci.** [03 — Come chiedere all'agente](docs/linee-guida/03-come-chiedere-all-agente.md).
 
-### Tappa 5 — Allarmi, report e mail (`tappa-5-allarmi`)
+### Tappa 5 — Allarmi e mail (`tappa-5-allarmi`)
 
-**Obiettivo.** Un allarme quando il valore resta fuori dai limiti per N giorni consecutivi, con l'elenco degli eventi, un report e la mail di avviso.
+**Obiettivo.** Un allarme quando il valore resta fuori dai limiti per N giorni consecutivi, con l'elenco degli eventi e la mail di avviso.
 
 **Cosa chiedere all'agente.**
 - l'allarme con persistenza di N giorni (N = 3 di default), configurabile;
 - l'elenco degli eventi e i giorni anomali evidenziati sul grafico;
-- un report HTML scaricabile con utenza, parametro, valore, media, deviazione standard, scostamento percentuale e grafico;
-- per ogni allarme, una mail con gli stessi contenuti salvata come file `.eml`, con destinatari configurabili (nessun invio vero);
-- il salvataggio della configurazione in un file leggibile, per riaprirla.
+- per ogni allarme, una mail salvata come file `.eml` con utenza, parametro, valore, media, deviazione standard, scostamento percentuale e periodo dell'evento, con destinatari configurabili (nessun invio vero).
+
+Nella tappa pronta del ramo `soluzione` ci sono in più un report HTML scaricabile, con il grafico, e il salvataggio della configurazione. In aula non si costruiscono: il docente li mostra. Se avanza tempo, provate a chiederli voi.
 
 **Cosa controllare.** Gli allarmi partono solo dopo N giorni consecutivi fuori limite, non al primo giorno.
 
 **Come verificare.**
 - Con N = 3 gli allarmi sono meno che con N = 1, sugli stessi dati.
-- Il report si apre nel browser e contiene il grafico.
 - Il file `.eml` si apre con un doppio clic in Outlook (o nel vostro programma di posta) già compilato.
 
-**Commit.** Allarmi, report e mail.
+**Commit.** Allarmi e mail.
 
 **Se sei indietro.** `tappa-4-benchmark`.
 
@@ -213,6 +212,7 @@ Se al primo avvio Streamlit chiede un indirizzo email nel terminale, premete Inv
 
 ## Se avanza tempo
 
+- Il report HTML di un evento, con il grafico, e il salvataggio della configurazione (vedi tappa 5).
 - Varianti: un secondo indicatore, un altro impianto, il foglio con i dati ogni 5 minuti.
 - Oppure: scrivete con l'agente la `SPECIFICA.md` di uno strumento vostro. Solo la specifica, niente codice.
 
