@@ -222,3 +222,86 @@ def test_serie_del_file_non_ha_il_trend():
     at = run_app()
     next(r for r in at.radio if r.label == "Cosa guardare").set_value("Serie del file").run()
     assert not at.exception and not at.metric
+
+
+# --- Commento AI (R16): solo a richiesta, solo con la chiave --------------------------------------------
+
+
+class FakeGemini:
+    """Un client finto per `ai_comment._make_client`: conta le chiamate e non usa la rete."""
+
+    def __init__(self, text="Commento di prova sul consumo.", error=None):
+        self.text, self.error, self.calls = text, error, 0
+        self.models = self
+
+    def generate_content(self, **kwargs):
+        self.calls += 1
+        if self.error is not None:
+            raise self.error
+
+        class Response:
+            text = self.text
+
+        return Response()
+
+
+def with_fake_gemini(monkeypatch, fake):
+    import ai_comment
+
+    monkeypatch.setenv("GEMINI_API_KEY", "chiave-sentinella-non-reale")
+    monkeypatch.setattr(ai_comment, "_make_client", lambda: fake)
+
+
+def ai_button(at: AppTest):
+    return next(b for b in at.button if b.label == "Commento AI")
+
+
+def test_senza_chiave_il_pulsante_commento_ai_e_spento_e_spiega_come_attivarlo():
+    at = run_app()
+    assert not at.exception and not at.error
+    assert ai_button(at).disabled
+    assert "GEMINI_API_KEY" in caption_with(at, "Commento AI spento")
+
+
+def test_con_la_chiave_gemini_non_si_chiama_finche_non_si_preme_il_pulsante(monkeypatch):
+    fake = FakeGemini()
+    with_fake_gemini(monkeypatch, fake)
+    at = run_app()
+    assert not ai_button(at).disabled and fake.calls == 0
+    at.run()  # una ricarica qualsiasi della pagina
+    assert fake.calls == 0
+    ai_button(at).click().run()
+    assert fake.calls == 1
+    assert any("Commento di prova sul consumo." in m.value for m in at.text)
+    assert caption_with(at, "Commento generato da un modello AI: da verificare")
+
+
+def test_il_commento_resta_in_memoria_finche_i_dati_non_cambiano(monkeypatch):
+    fake = FakeGemini()
+    with_fake_gemini(monkeypatch, fake)
+    at = run_app()
+    ai_button(at).click().run()
+    at.run()  # ricarica: non richiama
+    assert fake.calls == 1 and any("Commento di prova" in m.value for m in at.text)
+    at.number_input(key=f"{P2B}:persistence").set_value(1).run()  # altri eventi: altri dati, altro commento
+    assert not any("Commento di prova" in m.value for m in at.text)
+    assert fake.calls == 1
+
+
+def test_il_commento_non_entra_in_report_e_mail_se_non_lo_si_chiede(monkeypatch):
+    fake = FakeGemini()
+    with_fake_gemini(monkeypatch, fake)
+    at = run_app()
+    ai_button(at).click().run()
+    include = next(c for c in at.checkbox if c.label.startswith("Includi il commento AI"))
+    assert include.value is False
+
+
+def test_un_errore_di_gemini_e_un_messaggio_in_italiano_senza_traceback(monkeypatch):
+    fake = FakeGemini(error=RuntimeError("boom con chiave-sentinella-non-reale"))
+    with_fake_gemini(monkeypatch, fake)
+    at = run_app()
+    ai_button(at).click().run()
+    assert not at.exception
+    assert len(at.error) == 1 and "Riprova più tardi" in at.error[0].value
+    assert "chiave-sentinella" not in at.error[0].value

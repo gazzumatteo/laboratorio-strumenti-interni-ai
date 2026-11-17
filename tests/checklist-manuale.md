@@ -54,6 +54,16 @@ finisce un passo importante. Le sigle V16–V22 sono le verifiche di [SPECIFICA.
 - [ ] Rovino a mano il file (tolgo una virgola): l'app parte lo stesso, con un avviso in italiano e i valori predefiniti.
 - [ ] Cancello `configurazione.json` a fine prova (contiene indirizzi e-mail, non va nel repository).
 
+**7. Commento AI** (V24, facoltativa: solo con una chiave di Gemini)
+
+- [ ] Senza `GEMINI_API_KEY` nell'ambiente: sotto gli allarmi il pulsante «Commento AI» è spento e c'è un messaggio che spiega come attivarlo; nessun errore.
+- [ ] Con la chiave impostata nel terminale prima di avviare l'app: il pulsante è attivo, ma non succede nulla finché non lo premo (la rete non si usa a ogni ricarica).
+- [ ] P2B, benchmark mobile di 365 giorni: premo «Commento AI»: dopo la riga «Commento generato da un modello AI: da verificare» c'è un testo in italiano di al massimo 120 parole che cita 0,7127, 1,1094 e −35,75 %, con le cause scritte come ipotesi.
+- [ ] Ricarico la pagina: il commento resta senza una nuova chiamata. Cambio N: il commento sparisce (l'evento è un altro).
+- [ ] Con la casella «Includi il commento AI nel report e nella mail» spenta (è così di partenza), report e `.eml` non hanno il commento; con la casella accesa ce l'hanno, dopo la riga dell'etichetta.
+- [ ] Con una chiave sbagliata, o senza rete: compare un messaggio in italiano, senza traceback e senza la chiave.
+- [ ] La chiave non è in nessun file del repository (`git grep` della chiave non trova nulla).
+
 **Esito**
 
 Data: ____ · Chi: ____ · Punti che non tornano: ____

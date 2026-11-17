@@ -20,3 +20,6 @@ Thumbs.db
 # Configurazione salvata dall'app (R14): contiene indirizzi e-mail dei destinatari
 configurazione.json
 configurazione.json.tmp
+
+# Chiavi e file locali (R16): la chiave di Gemini sta nell'ambiente, mai in un file del repository
+.env

@@ -29,6 +29,9 @@ Y_TICKS, X_TICKS = 5, 6
 
 INDICATOR_COLOR, MEAN_COLOR, LIMIT_COLOR, EVENT_COLOR = "#2f6fb5", "#8a8f98", "#d1342b", "#d1342b"
 
+# Il testo di un modello AI (R16) non compare mai senza questa riga davanti.
+AI_COMMENT_LABEL = "Commento generato da un modello AI: da verificare"
+
 
 def format_number(value: float) -> str:
     """Quattro decimali con la virgola; «–» se il valore manca."""
@@ -186,11 +189,14 @@ def build_report_html(
     series: pd.Series,
     limits: pd.DataFrame,
     settings: list[tuple[str, str]],
+    ai_comment: str | None = None,
 ) -> str:
     """Pagina HTML completa del report di un evento (R12).
 
     `settings` sono coppie etichetta/valore già scritte da chi chiama (benchmark,
     k, N, ...). Stesso input, stesso testo: nel report non c'è la data di generazione.
+    `ai_comment` è il commento di un modello AI (R16): se c'è, compare in una sezione
+    propria, sempre dopo la riga «Commento generato da un modello AI: da verificare».
     """
     parameter = indicator.parameter or indicator.name
     lower = limits.at[event.trigger_day, "lower"]
@@ -198,6 +204,10 @@ def build_report_html(
     fields = [*_alarm_fields(event, indicator), ("Limiti nel giorno di scatto", f"{format_number(lower)} – {format_number(upper)}")]
     period = _event_period(event)
     title = f"Report di allarme — {indicator.name}"
+    ai_section = ""
+    if ai_comment:
+        paragraphs = "\n".join(f"<p>{html.escape(p)}</p>" for p in ai_comment.strip().split("\n\n"))
+        ai_section = f'\n<h2>Commento AI</h2>\n<p class="sub">{html.escape(AI_COMMENT_LABEL)}</p>\n{paragraphs}\n'
     return f"""<!doctype html>
 <html lang="it">
 <head>
@@ -247,7 +257,7 @@ def build_report_html(
 <table>
 {_rows(settings)}
 </table>
-
+{ai_section}
 <footer>Scostamento % = (valore − μ) ÷ μ × 100, nel giorno di scatto. Report prodotto dall'app Monitoraggio impianti.</footer>
 </body>
 </html>
@@ -291,8 +301,12 @@ def parse_recipients(text: str) -> list[str]:
     return recipients
 
 
-def build_event_email(event: AlarmEvent, indicator: Indicator, recipients: list[str]) -> bytes:
+def build_event_email(
+    event: AlarmEvent, indicator: Indicator, recipients: list[str], ai_comment: str | None = None
+) -> bytes:
     """Il file `.eml` di un evento: una bozza già compilata, senza grafico (R13). Non invia nulla.
+
+    `ai_comment` (R16), se c'è, entra nel corpo dopo i dati, sotto la riga «Commento generato da un modello AI: da verificare».
 
     `X-Unsent: 1` fa aprire il file in Outlook come messaggio da inviare. Non ci sono
     `From` né `Date`: stesso input, stesso file.
@@ -306,11 +320,13 @@ def build_event_email(event: AlarmEvent, indicator: Indicator, recipients: list[
     message["X-Unsent"] = "1"
     details = "\n".join(f"{label}: {value}" for label, value in _alarm_fields(event, indicator))
     period = "\n".join(f"{label}: {value}" for label, value in _event_period(event))
+    ai_part = f"{AI_COMMENT_LABEL}\n{ai_comment.strip()}\n\n" if ai_comment else ""
     message.set_content(
         f"Allarme su {indicator.utility or indicator.name}: il valore è rimasto {event.direction.value} i limiti "
         f"per {_days(event.duration_days)} consecutivi.\n\n"
         f"{details}\n\n"
         f"Periodo dell'evento\n{period}\n\n"
+        f"{ai_part}"
         "Scostamento % = (valore − μ) ÷ μ × 100, nel giorno di scatto.\n"
         "Il grafico dell'andamento è nel report HTML dell'evento.\n",
         charset="utf-8",

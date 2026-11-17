@@ -228,3 +228,35 @@ def test_a_capo_nei_destinatari_non_puo_diventare_un_altra_intestazione(case):
     event, *_ = case
     with pytest.raises(ValueError):
         build_event_email(event, INDICATOR, ["a@b.it\nBcc: x@y.it"])
+
+
+# --- Commento AI facoltativo (R16): entra solo se richiesto -----------------------------------------
+
+
+AI_TEXT = "Il consumo è salito <b>molto</b>.\n\nCausa possibile: una perdita."
+
+
+def test_senza_commento_report_e_mail_non_cambiano_e_non_hanno_l_etichetta(case):
+    event, series, limits = case
+    page = build_report_html(event, INDICATOR, series, limits, [("Benchmark", "fisso")])
+    assert page == build_report_html(event, INDICATOR, series, limits, [("Benchmark", "fisso")], None)
+    assert build_event_email(event, INDICATOR, ["a@x.it"]) == build_event_email(event, INDICATOR, ["a@x.it"], None)
+    assert "modello AI" not in page and "Commento AI" not in page
+    assert "modello AI" not in mail_of(event).get_content()
+
+
+def test_il_report_con_commento_ha_l_etichetta_e_il_testo_senza_html(case):
+    event, series, limits = case
+    page = build_report_html(event, INDICATOR, series, limits, [("Benchmark", "fisso")], AI_TEXT)
+    assert page.index("Commento generato da un modello AI: da verificare") < page.index("Causa possibile")
+    assert "&lt;b&gt;molto&lt;/b&gt;" in page and "<b>molto</b>" not in page  # il testo del modello non diventa HTML
+    assert page.count("<p>") == 2  # un capoverso per ogni riga vuota del commento
+    assert "<svg" in page  # il resto del report c'è ancora
+
+
+def test_la_mail_con_commento_ha_l_etichetta_prima_del_testo(case):
+    event, *_ = case
+    raw = build_event_email(event, INDICATOR, ["a@x.it"], AI_TEXT)
+    text = message_from_bytes(raw, policy=policy.default).get_content()
+    assert text.index("Commento generato da un modello AI: da verificare") < text.index("Il consumo è salito")
+    assert "200,0000" in text  # i dati dell'allarme ci sono sempre

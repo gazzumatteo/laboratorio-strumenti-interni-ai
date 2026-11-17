@@ -7,6 +7,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from ai_comment import API_KEY_VARIABLE, AiCommentError, api_key, build_prompt, comment_event, model_name
 from alarms import AlarmEvent, alarm_days, find_anomalous_days, find_events
 from benchmark import (
     DEFAULT_MIN_VALID_DAYS,
@@ -17,6 +18,7 @@ from benchmark import (
     compute_benchmark,
 )
 from export import (
+    AI_COMMENT_LABEL,
     build_event_email,
     build_report_html,
     email_file_name,
@@ -470,6 +472,40 @@ def event_label(event: AlarmEvent) -> str:
     )
 
 
+def choose_ai_comment(
+    event: AlarmEvent, indicator: Indicator, series: pd.Series, limits: pd.DataFrame, k: float
+) -> str | None:
+    """Il pulsante «Commento AI» (R16). Restituisce il commento da mettere in report e mail, se l'utente lo vuole.
+
+    Gemini si chiama solo quando si preme il pulsante, mai a ogni ricarica. Il commento resta in
+    memoria finché non cambia il testo inviato al modello (cioè i dati dell'evento) o il modello.
+    Senza chiave il pulsante è spento e un messaggio spiega come attivarlo.
+    """
+    if api_key() is None:
+        st.button("Commento AI", disabled=True)
+        st.caption(
+            f"Commento AI spento: manca la chiave. Imposta la variabile d'ambiente {API_KEY_VARIABLE} "
+            "e riavvia l'app (come si fa è nella guida, tappa 8)."
+        )
+        return None
+    comments: dict[tuple[str, str], str] = st.session_state.setdefault("ai_comments", {})
+    memory_key = (model_name(), build_prompt(event, indicator, series, limits, k))
+    if st.button("Commento AI", help="Chiede a un modello Gemini un breve commento su questo evento."):
+        try:
+            with st.spinner("Gemini sta scrivendo il commento…"):
+                comments[memory_key] = comment_event(event, indicator, series, limits=limits, k=k)
+        except AiCommentError as exc:
+            st.error(str(exc))
+    comment = comments.get(memory_key)
+    if comment is None:
+        return None
+    st.caption(AI_COMMENT_LABEL)
+    st.text(comment)  # testo semplice: link e immagini scritti dal modello non vengono resi
+    if st.checkbox("Includi il commento AI nel report e nella mail", value=False):
+        return comment
+    return None
+
+
 def show_event_downloads(
     events: list[AlarmEvent],
     indicator: Indicator,
@@ -477,8 +513,9 @@ def show_event_downloads(
     limits: pd.DataFrame,
     settings: list[tuple[str, str]],
     recipients: list[str] | None,
+    k: float,
 ) -> None:
-    """Scelta dell'evento (se più di uno) e download del suo report HTML (R12) e della sua mail `.eml` (R13).
+    """Scelta dell'evento (se più di uno), commento AI facoltativo (R16) e download del suo report HTML (R12) e della sua mail `.eml` (R13).
 
     `recipients` è None se nel campo c'è un indirizzo non valido: la mail non si offre.
     """
@@ -487,9 +524,10 @@ def show_event_downloads(
     else:
         chosen = st.selectbox("Evento", range(len(events)), format_func=lambda i: event_label(events[i]))
         event = events[chosen]
+    ai_comment = choose_ai_comment(event, indicator, series, limits, k)
     st.download_button(
         "Scarica il report HTML",
-        data=build_report_html(event, indicator, series, limits, settings),
+        data=build_report_html(event, indicator, series, limits, settings, ai_comment),
         file_name=report_file_name(event, indicator),
         mime="text/html",
     )
@@ -500,7 +538,7 @@ def show_event_downloads(
         st.caption("Nessun destinatario: la mail si aprirà con il campo A: vuoto.")
     st.download_button(
         "Scarica la mail (.eml)",
-        data=build_event_email(event, indicator, recipients),
+        data=build_event_email(event, indicator, recipients, ai_comment),
         file_name=email_file_name(event, indicator),
         mime="message/rfc822",
     )
@@ -629,7 +667,7 @@ if mode == "Indicatore":
         show_events(events, int(anomalies.notna().sum()), persistence)
         if events:
             show_event_downloads(
-                events, indicator, series, limits, report_settings(indicator, spec, k, persistence, exclude), recipients
+                events, indicator, series, limits, report_settings(indicator, spec, k, persistence, exclude), recipients, k
             )
 
 with st.expander("Pulizia dei dati"):
