@@ -64,7 +64,14 @@ git switch -c riparto-da-tappa-3 tappa-3-grafico
 
 Il primo comando scarica le tappe pronte. Il secondo crea un nuovo ramo di lavoro (`riparto-da-tappa-3`, il nome lo scegliete voi) a partire dalla tappa indicata. I vostri commit restano sul ramo di prima.
 
-Se avete modifiche non salvate, prima fate un commit oppure mettetele da parte con `git stash`.
+Se avete modifiche non salvate, prima fate un commit di tutto:
+
+```
+git add -A
+git commit -m "Lavoro fino a qui"
+```
+
+Non usate `git stash` da solo: non mette da parte i file nuovi (per esempio `app.py` mai committato) e il cambio di tappa si blocca con "untracked working tree files would be overwritten".
 
 ## Le tappe
 
