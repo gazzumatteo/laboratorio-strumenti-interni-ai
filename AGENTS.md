@@ -4,7 +4,7 @@ Regole del progetto per l'agente (Claude Code o Codex). Si leggono a ogni sessio
 
 ## Stato del repository
 
-Materiale di un corso (CSMT / CLUI-AS, 19–20 novembre 2026): si costruisce con l'agente una piccola app Streamlit che monitora serie di misure di impianti e segnala anomalie. **Siamo alla tappa 3: l'app mostra il grafico di una serie del file.** Il codice c'è: `loader.py` (R1–R3, caricamento e pulizia) e `app.py` (scelta della serie, grafico, periodo, riquadro "Pulizia dei dati", messaggio d'errore se il file manca). Gli altri moduli di SPECIFICA.md §6 non esistono ancora. Il resto del repo è guida, linee guida, dati e [SPECIFICA.md](SPECIFICA.md). L'app si costruisce a tappe (vedi [GUIDA.md](GUIDA.md)).
+Materiale di un corso (CSMT / CLUI-AS, 19–20 novembre 2026): si costruisce con l'agente una piccola app Streamlit che monitora serie di misure di impianti e segnala anomalie. **Siamo alla tappa 4: l'app mostra indicatori e benchmark, senza allarmi.** Il codice c'è: `loader.py` (R1–R3, caricamento e pulizia), `indicators.py` (R4–R5: formule A/B e (A+B)/C con fattori di conversione, classificazione dei giorni valido/mancante/fermo/fuori scala), `benchmark.py` (R6–R7: μ e σ fisso o mobile, limiti μ ± kσ) e `app.py` (scelta di indicatore o serie, filtro dei giorni esclusi, benchmark, grafico con media e limiti, riquadro "Pulizia dei dati", messaggio d'errore se il file manca). Gli altri moduli di SPECIFICA.md §6 (`alarms`, `export`, `settings`) non esistono ancora. Il resto del repo è guida, linee guida, dati e [SPECIFICA.md](SPECIFICA.md). L'app si costruisce a tappe (vedi [GUIDA.md](GUIDA.md)).
 
 [SPECIFICA.md](SPECIFICA.md) è la fonte di verità: requisiti R1–R14, verifiche V1–V22, lista "Fuori" e domande aperte. Quando una scelta non è lì, non decidere in silenzio: chiedi. Il materiale di partenza è in [docs/caso-esempio/](docs/caso-esempio/README.md); il metodo del corso in [docs/linee-guida/](docs/linee-guida/).
 
@@ -12,7 +12,7 @@ Materiale di un corso (CSMT / CLUI-AS, 19–20 novembre 2026): si costruisce con
 
 - **Python 3.12**, gestito con **uv**: pacchetti solo con `uv add` (di test: `uv add --dev`), mai con pip. Non si attiva né si crea a mano nessun ambiente: `uv run` crea `.venv/` da solo.
 - **Streamlit** per l'interfaccia; **pandas** (con openpyxl) per leggere l'Excel. I test, con **pytest**, arrivano con la tappa 6.
-- Grafici: per ora il grafico a linee incluso con Streamlit (`st.line_chart`), nessuna libreria in più. Nessun'altra dipendenza senza averlo concordato.
+- Grafici: **Altair** per il grafico a livelli (media, limiti, giorni esclusi); `st.line_chart` per la serie semplice. Nessun'altra dipendenza senza averlo concordato.
 
 ## Comandi
 
@@ -24,7 +24,7 @@ Si lanciano dalla radice del repository. L'app esiste; i test no (pytest non è 
 
 ## Architettura
 
-Flusso dati → calcoli → risultati, in cascata, un modulo per responsabilità (dettaglio e interfacce in SPECIFICA.md §6). Esistono `loader` e `app`; gli altri sono previsti:
+Flusso dati → calcoli → risultati, in cascata, un modulo per responsabilità (dettaglio e interfacce in SPECIFICA.md §6). Esistono `loader`, `indicators`, `benchmark` e `app`; gli altri sono previsti:
 
 `loader` (Excel → tabella giornaliera pulita) → `indicators` (serie dell'indicatore + giorni non validi) → `benchmark` (μ, σ, limiti fissi o mobili) → `alarms` (giorni anomali → eventi con persistenza di N giorni) → `export` (report HTML, `.eml`) e `app` (Streamlit). `settings` legge e scrive `configurazione.json`.
 
