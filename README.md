@@ -1,8 +1,6 @@
 # Sviluppo di un Proof of Concept (PoC) applicato al monitoraggio di impianti e reti
 
-Materiale del corso CSMT / CLUI-AS del 19 e 20 novembre 2026.
-
-Un laboratorio pratico: in due mattine costruiamo una piccola applicazione web in Python con l'aiuto di un assistente AI di programmazione (Claude Code oppure Codex) dentro Visual Studio Code. L'app monitora serie di misure da impianti, le confronta con un benchmark statistico e segnala le anomalie.
+Un laboratorio pratico: costruiamo una piccola applicazione web in Python con l'aiuto di un assistente AI di programmazione (Claude Code oppure Codex) dentro Visual Studio Code. L'app monitora serie di misure da impianti, le confronta con un benchmark statistico e segnala le anomalie.
 
 L'app è il pretesto. Lo scopo è imparare un metodo ripetibile per costruirsi da soli strumenti interni, in tre fasi: **Progettazione → Sviluppo → Testing**. Si parte da un [caso d'esempio](docs/caso-esempio/README.md) reale, ma il metodo vale per qualsiasi caso.
 
